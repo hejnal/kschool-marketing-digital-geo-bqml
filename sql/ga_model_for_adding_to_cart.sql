@@ -63,7 +63,7 @@ CREATE OR REPLACE TABLE
       SELECT
         fullvisitorid,
         totals.newVisits AS new_visit,
-        (
+        IF((
         SELECT
           SUM(
           IF
@@ -71,7 +71,7 @@ CREATE OR REPLACE TABLE
               1,
               0))
         FROM
-          UNNEST(hits)) AS added_to_cart
+          UNNEST(hits)) >=1, 1, 0) AS added_to_cart
       FROM
         `bigquery-public-data.google_analytics_sample.ga_sessions_*`)
     GROUP BY
