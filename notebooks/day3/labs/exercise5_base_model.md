@@ -9,3 +9,19 @@
 4) Apply model changes (algorithm, parameters, features, etc)
 
 5) Infer the results of a test set (with a threshold)
+
+
+```
+SELECT
+  *
+FROM
+  ML.PREDICT(MODEL `mydataset.mymodel`,
+    (
+    SELECT
+      custom_label,
+      column1,
+      column2
+    FROM
+      `mydataset.mytable`),
+    STRUCT(0.55 AS threshold))
+```
