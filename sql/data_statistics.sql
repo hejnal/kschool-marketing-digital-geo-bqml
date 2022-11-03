@@ -9,7 +9,7 @@ SELECT
   VARIANCE(instrumentalness) AS variance,
   COUNTIF(instrumentalness IS NULL) AS num_nulls
 FROM
-  `<project_id>.<dataset_id>.spotify_dataset_ready_for_split`;
+  `<project_id>.<dataset_id>.<table_name>`;
 
 -- sample query to have one feature histogram
 WITH buckets AS (
@@ -29,7 +29,7 @@ WITH buckets AS (
       FALSE
     ) AS bucket
   FROM
-    `<project_id>.<dataset_id>.spotify_dataset_ready_for_split`
+    `<project_id>.<dataset_id>.<table_name>`
 )
 SELECT
   col_name,
@@ -43,10 +43,10 @@ GROUP BY
 
 -- create a stored procedure
 CREATE
-OR REPLACE PROCEDURE < dataset_id >.PrepareFeatureStatistics(
+OR REPLACE PROCEDURE <dataset_id>.PrepareFeatureStatistics(
   IN dataset_id STRING,
   IN target_table_name STRING
-) BEGIN DECLARE feature_columns ARRAY < STRING >;
+) BEGIN DECLARE feature_columns ARRAY <STRING>;
 
 DECLARE x INT64 DEFAULT 1;
 
@@ -178,6 +178,6 @@ SET
   dataset_id = "<dataset_id>";
 
 SET
-  target_table_name = "spotify_dataset_ready_for_split";
+  target_table_name = "<table_name>";
 
 CALL `<project_id>.<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);
