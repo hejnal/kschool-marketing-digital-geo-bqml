@@ -20,7 +20,7 @@ SELECT
   product_detail_view,
   will_buy_later
 FROM
-  web_analytics_eu.indie_label_events_data_with_bias_with_split
+  `<dataset_id>.<table_name>_ready_for_ml`
 WHERE
   split_col = 'training';
 
@@ -43,7 +43,7 @@ FROM
         product_detail_view,
         will_buy_later
       FROM
-        web_analytics_eu.indie_label_events_data_with_bias_with_split
+        `<dataset_id>.<table_name>_ready_for_ml`
       WHERE
         split_col = 'test'
     )

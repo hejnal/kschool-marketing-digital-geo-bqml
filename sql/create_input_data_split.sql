@@ -1,13 +1,13 @@
 #standardSQL
 CREATE
-OR REPLACE TABLE < dataset_id >.spotify_dataset_ready_for_split AS (
+OR REPLACE TABLE `<dataset_id>.<table_name>_ready_for_ml` AS (
   SELECT
     *,
     CASE
       (
         MOD(
           ABS(
-            FARM_FINGERPRINT(TO_JSON_STRING(spotify_dataset))
+            FARM_FINGERPRINT(TO_JSON_STRING(raw_features))
           ),
           10
         )
@@ -17,5 +17,5 @@ OR REPLACE TABLE < dataset_id >.spotify_dataset_ready_for_split AS (
       ELSE 'training'
     END AS split_col
   FROM
-    `my-gcp-project-id.my_raw_data_dataset.spotify_dataset` spotify_dataset
+    `<dataset_id>.<table_name>` raw_features
 );
