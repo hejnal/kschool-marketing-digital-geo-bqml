@@ -8,7 +8,7 @@ WITH ranked_cities AS (
                 ST_NUMPOINTS(geometry) DESC
         ) AS rank
     FROM
-        `my-gcp-project-id.city_maps.geo_maps`
+        `<dataset>.geo_maps`
     WHERE
         LOWER(NAME) IN (
             ('madrid'),

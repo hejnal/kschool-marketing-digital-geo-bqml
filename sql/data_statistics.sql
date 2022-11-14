@@ -9,7 +9,7 @@ SELECT
   VARIANCE(instrumentalness) AS variance,
   COUNTIF(instrumentalness IS NULL) AS num_nulls
 FROM
-  `<project_id>.<dataset_id>.<table_name>`;
+  `<dataset_id>.<table_name>`;
 
 -- sample query to have one feature histogram
 WITH buckets AS (
@@ -29,7 +29,7 @@ WITH buckets AS (
       FALSE
     ) AS bucket
   FROM
-    `<project_id>.<dataset_id>.<table_name>`
+    `<dataset_id>.<table_name>`
 )
 SELECT
   col_name,
@@ -180,4 +180,4 @@ SET
 SET
   target_table_name = "<table_name>";
 
-CALL `<project_id>.<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);
+CALL `<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);

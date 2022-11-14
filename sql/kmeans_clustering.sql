@@ -19,7 +19,7 @@ SELECT
     valence,
     key
 FROM
-    `my-gcp-project-id.raw_data.spotify_dataset`;
+    `<dataset>.spotify_dataset`;
 
 CREATE
 OR REPLACE TABLE prediction_outputs.spotify_clusters_more_clusters_2010 AS (
@@ -27,12 +27,12 @@ OR REPLACE TABLE prediction_outputs.spotify_clusters_more_clusters_2010 AS (
         *
     FROM
         ML.PREDICT(
-            MODEL `my-gcp-project-id.ml_models.spotify_clusters_more_clusters`,
+            MODEL `<ml_models_dataset>.spotify_clusters_more_clusters`,
             (
                 SELECT
                     *
                 FROM
-                    `my-gcp-project-id.raw_data.spotify_dataset`
+                    `<dataset>.spotify_dataset`
                 WHERE
                     year = 2010
             )
@@ -50,7 +50,7 @@ WITH artist_clusters AS (
         CENTROID_ID AS cluster_id,
         COUNT(*) AS songs_num
     FROM
-        `my-gcp-project-id.prediction_outputs.spotify_clusters_2010`
+        `<prediction_dataset>.spotify_clusters_2010`
     GROUP BY
         1,
         2,

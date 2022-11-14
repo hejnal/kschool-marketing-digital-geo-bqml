@@ -1,5 +1,5 @@
 CREATE
-OR REPLACE MODEL ml_models.spotify_pca3 OPTIONS(model_type = "PCA", num_principal_components = 3) AS
+OR REPLACE MODEL <ml_dataset>.spotify_pca3 OPTIONS(model_type = "PCA", num_principal_components = 3) AS
 SELECT
     acousticness,
     danceability,
@@ -8,10 +8,10 @@ SELECT
     loudness,
     valence
 FROM
-    `my-gcp-project-id.raw_data.spotify_dataset`;
+    `<dataset>.spotify_dataset`;
 
 CREATE
-OR REPLACE MODEL ml_models.spotify_pca2 OPTIONS(model_type = "PCA", num_principal_components = 2) AS
+OR REPLACE MODEL <ml_dataset>.spotify_pca2 OPTIONS(model_type = "PCA", num_principal_components = 2) AS
 SELECT
     acousticness,
     danceability,
@@ -20,12 +20,12 @@ SELECT
     loudness,
     valence
 FROM
-    `my-gcp-project-id.raw_data.spotify_dataset`;
+    `<dataset>.spotify_dataset`;
 
 SELECT
     *
 FROM
-    ML.PRINCIPAL_COMPONENT_INFO(MODEL `ml_models.spotify_pca`);
+    ML.PRINCIPAL_COMPONENT_INFO(MODEL `<ml_dataset>.spotify_pca`);
 
 CREATE
 OR REPLACE TABLE prediction_outputs.spotify_clusters_pca_2_2010 AS (
@@ -33,7 +33,7 @@ OR REPLACE TABLE prediction_outputs.spotify_clusters_pca_2_2010 AS (
         *
     FROM
         ML.PREDICT(
-            model ml_models.spotify_pca2,
+            model <ml_dataset>.spotify_pca2,
             (
                 SELECT
                     acousticness,
@@ -50,7 +50,7 @@ OR REPLACE TABLE prediction_outputs.spotify_clusters_pca_2_2010 AS (
                     ) AS artist,
                     popularity
                 FROM
-                    `my-gcp-project-id.raw_data.spotify_dataset`
+                    `<dataset>.spotify_dataset`
                 WHERE
                     year = 2010
             )
@@ -63,7 +63,7 @@ OR REPLACE TABLE prediction_outputs.spotify_clusters_pca_3_2010 AS (
         *
     FROM
         ML.PREDICT(
-            model ml_models.spotify_pca3,
+            model <ml_dataset>.spotify_pca3,
             (
                 SELECT
                     acousticness,
@@ -80,7 +80,7 @@ OR REPLACE TABLE prediction_outputs.spotify_clusters_pca_3_2010 AS (
                     ) AS artist,
                     popularity
                 FROM
-                    `my-gcp-project-id.raw_data.spotify_dataset`
+                    `<dataset>.spotify_dataset`
                 WHERE
                     year = 2010
             )
