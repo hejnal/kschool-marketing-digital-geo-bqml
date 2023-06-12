@@ -11,7 +11,9 @@ The basic structure is:
 Example:
 
 ```bash
-egrep -rl '<project_id>' ./ | grep -v README.md | xargs -I@ sed -i '' "s/<project_id>/my-gcp-project-id/g" @
+egrep -rl '<project_id>' ./ | grep -v README.md | xargs -I@ sed -i '' "s/<project_id>/whejna-bqml-sandbox/g" @
 
-egrep -rl '<dataset_id>' ./ | grep -v README.md | xargs -I@ sed -i '' "s/<dataset_id>/my_raw_data_dataset/g" @
+egrep -rl '<dataset_id>' ./ | grep -v README.md | xargs -I@ sed -i '' "s/<dataset_id>/raw_data/g" @
+
+egrep -rl '<table_name>' ./ | grep -v README.md | xargs -I@ sed -i '' "s/<table_name>/spotify_dataset/g" @
 ```
