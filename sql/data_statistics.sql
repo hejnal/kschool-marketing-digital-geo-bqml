@@ -170,14 +170,16 @@ END LOOP;
 END;
 
 -- run the stored procedure
-DECLARE dataset_id STRING DEFAULT NULL;
+BEGIN
+  DECLARE dataset_id STRING DEFAULT NULL;
 
-DECLARE target_table_name STRING DEFAULT NULL;
+  DECLARE target_table_name STRING DEFAULT NULL;
 
-SET
-  dataset_id = "<dataset_id>";
+  SET
+    dataset_id = "<dataset_id>";
 
-SET
-  target_table_name = "<table_name>";
+  SET
+    target_table_name = "<table_name>";
 
-CALL `<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);
+  CALL `<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);
+END;
