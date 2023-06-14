@@ -48,7 +48,7 @@ OR REPLACE PROCEDURE <dataset_id>.PrepareFeatureStatistics(
   IN target_table_name STRING
 ) BEGIN DECLARE feature_columns ARRAY <STRING>;
 
-DECLARE x INT64 DEFAULT 1;
+DECLARE x INT64 DEFAULT 0;
 
 DECLARE target_table_statistics_name STRING;
 
@@ -62,29 +62,29 @@ SET
 
 -- create an empty statistics table
 EXECUTE IMMEDIATE CONCAT(
-  "CREATE OR REPLACE TABLE ",
+  "CREATE OR REPLACE TABLE `",
   dataset_id,
   ".",
   target_table_statistics_name,
-  "(col_name STRING, min_value FLOAT64, max_value FLOAT64, avg_value FLOAT64, std_dev FLOAT64, variance FLOAT64, apx_quantiles STRING, num_rows INT64, num_nulls INT64, correlation_with_target FLOAT64)"
+  "`(col_name STRING, min_value FLOAT64, max_value FLOAT64, avg_value FLOAT64, std_dev FLOAT64, variance FLOAT64, apx_quantiles STRING, num_rows INT64, num_nulls INT64, correlation_with_target FLOAT64)"
 );
 
 -- create an empty historgrams table
 EXECUTE IMMEDIATE CONCAT(
-  "CREATE OR REPLACE TABLE ",
+  "CREATE OR REPLACE TABLE `",
   dataset_id,
   ".",
   target_table_histograms_name,
-  "(col_name STRING, bucket STRING, num_rows INT64)"
+  "`(col_name STRING, bucket STRING, num_rows INT64)"
 );
 
 -- get feature columns
 EXECUTE IMMEDIATE CONCAT(
-  "SELECT ARRAY_AGG(column_name) FROM ",
+  "SELECT ARRAY_AGG(column_name) FROM `",
   dataset_id,
-  ".INFORMATION_SCHEMA.COLUMNS WHERE table_name = '",
+  "`.INFORMATION_SCHEMA.COLUMNS WHERE table_name = '",
   target_table_name,
-  "' AND column_name NOT IN ('id', 'split_col') AND data_type = 'FLOAT64'"
+  "' AND column_name NOT IN ('id', 'split_col') AND (data_type = 'FLOAT64' OR data_type = 'FLOAT')"
 ) INTO feature_columns;
 
 LOOP IF x >= ARRAY_LENGTH(feature_columns) THEN BREAK;
@@ -122,11 +122,11 @@ EXECUTE IMMEDIATE CONCAT(
   feature_columns [
   OFFSET
     (x)],
-  ", 5) FROM ",
+  ", 5) FROM `",
   dataset_id,
   ".",
   target_table_name,
-  ")) AS q) AS apx_quantiles, COUNT(*) AS num_rows, COUNTIF(",
+  "`)) AS q) AS apx_quantiles, COUNT(*) AS num_rows, COUNTIF(",
   feature_columns [
   OFFSET
     (x)],
@@ -134,10 +134,10 @@ EXECUTE IMMEDIATE CONCAT(
   feature_columns [
   OFFSET
     (x)],
-  ") AS correlation_with_target FROM ",
+  ") AS correlation_with_target FROM `",
   dataset_id,
   ".",
-  target_table_name
+  target_table_name,"`"
 ) USING feature_columns [
 OFFSET
   (x)];
@@ -152,11 +152,11 @@ EXECUTE IMMEDIATE CONCAT(
   feature_columns [
   OFFSET
     (x)],
-  ",[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9], FALSE) AS bucket FROM ",
+  ",[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9], FALSE) AS bucket FROM `",
   dataset_id,
   ".",
   target_table_name,
-  ")",
+  "`)",
   "SELECT col_name, bucket, COUNT(*) AS num_rows FROM buckets GROUP BY 1, 2"
 ) USING feature_columns [
 OFFSET
