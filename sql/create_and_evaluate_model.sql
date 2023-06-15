@@ -1,4 +1,5 @@
 #standardSQL
+
 --demo baseline model
 CREATE
 OR REPLACE MODEL ml_models.demo_baseline_ga_logistic_regression_model OPTIONS(
@@ -29,7 +30,7 @@ SELECT
   *
 FROM
   ML.PREDICT(
-    MODEL ml_models.demo_baseline_logistic_regression_model,
+    MODEL <dataset_id>.demo_baseline_ga_logistic_regression_model,
     (
       SELECT
         bounces,
@@ -48,5 +49,3 @@ FROM
         split_col = 'test'
     )
   );
-
--- evaluate the model
