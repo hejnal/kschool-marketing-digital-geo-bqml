@@ -1,0 +1,14 @@
+{
+    "instances": [{
+        "bounces": 1,
+        "time_on_site": 12,
+        "page_views": 1,
+        "source": "google",
+        "medium": "cpc",
+        "channel_grouping": "test",
+        "is_mobile": false,
+        "add_to_cart": 1,
+        "artist_detail_view": 1,
+        "distance_bucket": "bucket1"
+    }]
+}
