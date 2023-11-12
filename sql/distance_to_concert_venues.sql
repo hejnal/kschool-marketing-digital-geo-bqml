@@ -5,7 +5,7 @@ WITH
     geography AS geometry,
     RANK() OVER(PARTITION BY city ORDER BY ST_NUMPOINTS(geography) DESC) AS rank
   FROM
-    `<dataset>.geo_maps`),
+    `<dataset>.<geo_maps_table>`),
   main_cities AS (
   SELECT
     LOWER(city_name) AS city_name,
@@ -18,13 +18,13 @@ WITH
   SELECT
     DISTINCT LOWER(city) AS city
   FROM
-    `<dataset>.ga_data_ready_for_modelling`),
+    `<dataset>.<indie_labels_ga_data_ready_for_modelling_table>`),
   concert_venues AS (
   SELECT
     LOWER(city_name) AS city,
     geography AS geometry
   FROM
-    `<dataset>.concert_venues` ),
+    `<dataset>.<concert_venues_table>` ),
   distance_from_venues AS (
   SELECT
     e.city AS event_city,
