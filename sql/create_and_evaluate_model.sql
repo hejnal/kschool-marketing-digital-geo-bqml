@@ -1,8 +1,7 @@
 #standardSQL
-
 --demo baseline model
 CREATE
-OR REPLACE MODEL <dataset_id>.demo_baseline_ga_logistic_regression_model OPTIONS(
+OR REPLACE MODEL `<model_dataset>.demo_baseline_ga_logistic_regression_model` OPTIONS(
   model_type = "LOGISTIC_REG",
   data_split_method = "AUTO_SPLIT",
   input_label_cols = ["will_buy_later"],
@@ -12,16 +11,16 @@ OR REPLACE MODEL <dataset_id>.demo_baseline_ga_logistic_regression_model OPTIONS
 SELECT
   bounces,
   time_on_site,
-  pageviews,
+  page_views,
   source,
   medium,
-  channelGrouping,
-  isMobile,
+  channel_grouping,
+  is_mobile,
   add_to_cart,
-  product_detail_view,
+  artist_detail_view,
   will_buy_later
 FROM
-  `<dataset_id>.<table_name>_ready_for_ml`
+  `<curated_dataset>.indie_label_events_ready_for_modelling_ready_for_ml`
 WHERE
   split_col = 'training';
 
@@ -30,21 +29,21 @@ SELECT
   *
 FROM
   ML.PREDICT(
-    MODEL <dataset_id>.demo_baseline_ga_logistic_regression_model,
+    MODEL `<model_dataset>.demo_baseline_ga_logistic_regression_model`,
     (
       SELECT
         bounces,
         time_on_site,
-        pageviews,
+        page_views,
         source,
         medium,
-        channelGrouping,
-        isMobile,
+        channel_grouping,
+        is_mobile,
         add_to_cart,
-        product_detail_view,
+        artist_detail_view,
         will_buy_later
       FROM
-        `<dataset_id>.<table_name>_ready_for_ml`
+        `<curated_dataset>.indie_label_events_ready_for_modelling_ready_for_ml`
       WHERE
         split_col = 'test'
     )

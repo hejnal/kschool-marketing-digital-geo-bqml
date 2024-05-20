@@ -43,10 +43,10 @@ GROUP BY
 
 -- create a stored procedure
 CREATE
-OR REPLACE PROCEDURE <dataset_id>.PrepareFeatureStatistics(
+OR REPLACE PROCEDURE < dataset_id >.PrepareFeatureStatistics(
   IN dataset_id STRING,
   IN target_table_name STRING
-) BEGIN DECLARE feature_columns ARRAY <STRING>;
+) BEGIN DECLARE feature_columns ARRAY < STRING >;
 
 DECLARE x INT64 DEFAULT 0;
 
@@ -137,7 +137,8 @@ EXECUTE IMMEDIATE CONCAT(
   ") AS correlation_with_target FROM `",
   dataset_id,
   ".",
-  target_table_name,"`"
+  target_table_name,
+  "`"
 ) USING feature_columns [
 OFFSET
   (x)];
@@ -170,16 +171,16 @@ END LOOP;
 END;
 
 -- run the stored procedure
-BEGIN
-  DECLARE dataset_id STRING DEFAULT NULL;
+BEGIN DECLARE dataset_id STRING DEFAULT NULL;
 
-  DECLARE target_table_name STRING DEFAULT NULL;
+DECLARE target_table_name STRING DEFAULT NULL;
 
-  SET
-    dataset_id = "<dataset_id>";
+SET
+  dataset_id = "<dataset_id>";
 
-  SET
-    target_table_name = "<table_name>";
+SET
+  target_table_name = "<table_name>";
 
-  CALL `<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);
+CALL `<dataset_id>.PrepareFeatureStatistics`(dataset_id, target_table_name);
+
 END;

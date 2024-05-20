@@ -17,5 +17,5 @@ OR REPLACE TABLE `<dataset_id>.<table_name>_ready_for_ml` AS (
       ELSE 'training'
     END AS split_col
   FROM
-    `<dataset_id>.<table_name>` raw_features
+    `<curated_dataset_id>.<table_name>` raw_features
 );
