@@ -7,14 +7,14 @@ OR REPLACE TABLE `<dataset_id>.<table_name>` AS (
     (
       SELECT
         PARSE_TIMESTAMP("%Y%m%d", date) AS parsed_date,
-        fullVisitorId,
+        fullVisitorId AS full_visitor_id,
         IFNULL(totals.bounces, 0) AS bounces,
         IFNULL(totals.timeOnSite, 0) AS time_on_site,
-        totals.pageviews AS pageviews,
+        totals.pageviews AS page_views,
         trafficSource.source,
         trafficSource.medium,
-        channelGrouping,
-        device.isMobile,
+        channelGrouping AS channel_grouping,
+        device.isMobile AS is_mobile,
         IF (
           (
             SELECT
@@ -58,7 +58,7 @@ OR REPLACE TABLE `<dataset_id>.<table_name>` AS (
     )
     JOIN (
       SELECT
-        fullvisitorid,
+        fullvisitorid AS full_visitor_id,
         IF (
           COUNTIF(
             new_visit IS NOT NULL
@@ -93,5 +93,5 @@ OR REPLACE TABLE `<dataset_id>.<table_name>` AS (
         )
       GROUP BY
         fullvisitorid
-    ) USING (fullVisitorId)
+    ) USING (full_visitor_id)
 );
