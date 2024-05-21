@@ -1,6 +1,6 @@
 -- optimised for adding to cart
 CREATE
-OR REPLACE TABLE web_analytics.ga_classic_events_data_optimised_for_adding_to_cart AS (
+OR REPLACE TABLE `<dataset_id>.<table_name>` AS (
   SELECT
     *
   FROM
