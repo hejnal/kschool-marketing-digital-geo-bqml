@@ -3,7 +3,7 @@ SELECT
   *
 FROM
   (
-    -- #1 from_item
+    -- #1 from_item: This subquery extracts the year from the creation_date and splits the tags string into individual tags.
     SELECT
       tag,
       EXTRACT(
@@ -17,8 +17,8 @@ FROM
     WHERE
       tags IS NOT null
   ) PIVOT (
-    -- #2 aggregate
-    COUNT(*) AS n -- #3 pivot_column
+    -- #2 aggregate: This clause specifies the aggregation function to be used for pivoting.
+    COUNT(*) AS n -- #3 pivot_column: This is the name of the column that will hold the aggregated values.
     FOR year in (
       2011,
       2012,

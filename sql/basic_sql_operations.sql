@@ -1,11 +1,12 @@
 #standardSQL
--- basic select
+
+-- Basic select: This query selects the unique island names from the penguins dataset.
 SELECT
   island
 FROM
   `bigquery-public-data.ml_datasets.penguins`;
 
--- basic where clause
+-- Basic where clause: This query selects all columns for penguins where the sex is 'FEMALE'.
 SELECT
   *
 FROM
@@ -13,15 +14,15 @@ FROM
 WHERE
   sex = 'FEMALE';
 
--- basic count
+-- Basic count: This query counts the total number of female penguins.
 SELECT
-  COUNT(*)
+  COUNT(*) AS num_female_penguins 
 FROM
   `bigquery-public-data.ml_datasets.penguins`
 WHERE
   sex = 'FEMALE';
 
--- basic count per sex
+-- Basic count per sex: This query counts the number of penguins for each sex, orders them descending.
 SELECT
   sex,
   COUNT(*) AS sex_total
@@ -30,46 +31,45 @@ FROM
 GROUP BY
   sex
 ORDER BY
-  2 DESC;
+  sex_total DESC;  -- Order by the calculated count in descending order
 
--- IN operator
+-- IN operator: This query filters to only 'MALE' and 'FEMALE' penguins, then counts per sex.
 SELECT
   sex,
   COUNT(*) AS sex_total
 FROM
   `bigquery-public-data.ml_datasets.penguins`
 WHERE
-  sex IN ('MALE', 'FEMALE')
+  sex IN ('MALE', 'FEMALE') 
 GROUP BY
   sex
 ORDER BY
-  2 DESC;
+  sex_total DESC;
 
--- with clause (left join)
+-- With clause (left join): This query creates a temporary table 'island_details' and then left joins it with the main penguins table to add country information.
 WITH island_details AS (
   SELECT
     'Biscoe' AS island,
     'US' AS country
-  UNION
-  ALL
+  UNION ALL
   SELECT
     'Torgersen' AS island,
     'Antartic' AS country
 )
 SELECT
-  l.*,
-  r.country
+  l.*,   -- Select all columns from the penguins table (l)
+  r.country  -- Add the country column from the island_details table (r)
 FROM
   `bigquery-public-data.ml_datasets.penguins` l
-  LEFT JOIN island_details r ON l.island = r.island;
+LEFT JOIN island_details r ON l.island = r.island;  -- Left join to keep all penguins, even if no country match
 
--- inner join
+
+-- Inner join: This query uses the same island_details table, but performs an inner join to only keep penguins on the specified islands, then counts penguins per island and country.
 WITH island_details AS (
   SELECT
     'Biscoe' AS island,
     'US' AS country
-  UNION
-  ALL
+  UNION ALL
   SELECT
     'Torgersen' AS island,
     'Antartic' AS country
@@ -80,60 +80,50 @@ SELECT
   COUNT(*) AS num_penguins
 FROM
   `bigquery-public-data.ml_datasets.penguins` l
-  JOIN island_details r ON l.island = r.island
+JOIN island_details r ON l.island = r.island  -- Inner join, only keep matching islands
 GROUP BY
-  1,
+  1,  
   2
 ORDER BY
-  3 DESC;
+  num_penguins DESC;
 
--- create array
+-- Create array: This query simply creates a sample array of tags.
 SELECT
   ['black', 'happy', 'white'] AS tags;
 
--- query with tags
+-- Query with tags: This creates a temporary table 'tags' with island-tag associations, then joins it to the penguins table.
 WITH tags AS (
   SELECT
     'Dream' AS island,
-    ['black',
-    'happy',
-    'white'] AS tags
-  UNION
-  ALL
+    ['black', 'happy', 'white'] AS tags
+  UNION ALL
   SELECT
     'Torgersen' AS island,
-    ['gray',
-    'nostalgic'] AS tags
+    ['gray', 'nostalgic'] AS tags
 )
 SELECT
   l.*,
-  r.tags
+  r.tags 
 FROM
   `bigquery-public-data.ml_datasets.penguins` l
-  JOIN tags r ON l.island = r.island
-LIMIT
-  10;
+JOIN tags r ON l.island = r.island
+LIMIT 10; 
 
--- unnesting tags
+-- Unnesting tags: This query uses the UNNEST function to flatten the 'tags' array, so each tag is on a separate row. 
 WITH tags AS (
   SELECT
     'Dream' AS island,
-    ['black',
-    'happy',
-    'white'] AS tags
-  UNION
-  ALL
+    ['black', 'happy', 'white'] AS tags
+  UNION ALL
   SELECT
     'Torgersen' AS island,
-    ['gray',
-    'nostalgic'] AS tags
+    ['gray', 'nostalgic'] AS tags
 )
 SELECT
   l.*,
-  tag,
+  tag  -- Extract individual tags using UNNEST
 FROM
   `bigquery-public-data.ml_datasets.penguins` l
-  JOIN tags r ON l.island = r.island
-  JOIN UNNEST(tags) AS tag
-LIMIT
-  10;
+JOIN tags r ON l.island = r.island
+JOIN UNNEST(tags) AS tag  -- Flatten the tags array
+LIMIT 10;
