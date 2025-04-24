@@ -1,3 +1,5 @@
+-- Table to use: `bigquery-public-data.ml_datasets.penguins`
+
 --Question: How many penguins are there in total in the dataset?
 
 --Question: What are the different species of penguins in this dataset, and how many of each species are there?
