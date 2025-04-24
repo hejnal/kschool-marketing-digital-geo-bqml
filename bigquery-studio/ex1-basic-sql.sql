@@ -28,9 +28,13 @@ and t2.island = "Dream"
 
 --Question: Can you find the maximum body mass recorded for each species of penguin?
 
-select 
+SELECT species, MAX(body_mass_g)
+FROM bigquery-public-data.ml_datasets.penguins
+GROUP BY species
 
 --Question: Identify the top 5 heaviest penguins (by body mass) along with their species, island, and sex.
+
+
 
 --Question: Find all unique pairs of islands that share at least one penguin species in common. For each pair, list the islands and one example of a species they share.
 
