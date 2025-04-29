@@ -100,3 +100,8 @@ AI.GENERATE(
     connection_id => 'us.llm-conn',
     endpoint => 'gemini-2.0-flash').result AS artist
 FROM avg_birthdate;
+
+
+-- add new feature example
+SELECT AI.GENERATE("You are a music industry expert. Has this artist: Lana Del Rey won a Grammy Award? Return true or false.",
+connection_id => 'us.llm-conn', endpoint => 'gemini-2.0-flash').result AS has_grammy;
