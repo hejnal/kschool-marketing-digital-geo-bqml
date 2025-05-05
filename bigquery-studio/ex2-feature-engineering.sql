@@ -14,17 +14,26 @@ Para consultar datos de múltiples días, usa _TABLE_SUFFIX BETWEEN '20160801' A
 El operador * en ga_sessions_* permite consultar todas las tablas que coincidan con ese patrón.
 */
 
--- 1. Crear un nuevo dataset personal (reemplazar <TU_DATSET_PERSONAL> con tu nombre)
-CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.<TU_DATSET_PERSONAL>`
+-- 1. Crear un nuevo dataset personal (reemplazar jptx-demo4 con tu nombre)
+CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.jptxdemo4`
 OPTIONS(location = 'US');
 
 -- 2. Consultas básicas para explorar el dataset
 
 -- Ejercicio 1: ¿De qué ciudad de EEUU se ha originado más tráfico en GA durante el día 20160801?
 -- Tu código aquí
+select * from `bigquery-public-data.google_analytics_sample.ga_sessions_20160801`
 
 -- Ejercicio 2: ¿Qué página de producto ha sido la más visitada (durante el día 20160801) globalmente?
 -- Tu código aquí
+select hits.page.pagePath, count(*)
+from `bigquery-public-data.google_analytics_sample.ga_sessions_20160801`,
+unnest(hits) as hits
+where hits.type = "PAGE" AND hits.page.pagePath NOT IN ('/home','/basket.html')
+group by 1
+order by 2 desc
+limit 5
+
 
 -- 3. Ejercicios para extraer características relevantes (Opcional)
 
@@ -42,8 +51,8 @@ OPTIONS(location = 'US');
 
 
 -- 4. (Requerido) Prepara los datos para modelar (ejectuar tal cual, creando datos para crear el primer modelo ML)
--- Crea o reemplaza una tabla llamada `<TU_DATSET_PERSONAL>.ga_propensidad_compra` con datos optimizados para análisis de ventas.
-CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra` AS (
+-- Crea o reemplaza una tabla llamada `jptx-demo4.ga_propensidad_compra` con datos optimizados para análisis de ventas.
+CREATE OR REPLACE TABLE `jptx-demo4.ga_propensidad_compra` AS (
   -- Selecciona todas las columnas de la subconsulta.
   SELECT
     *
@@ -151,8 +160,8 @@ CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra` AS (
 
 
 -- 5. (Requerido) Realiza un split de datos para entrenar y evaluar
--- Crea o reemplaza una tabla llamada `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
-CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml` AS (
+-- Crea o reemplaza una tabla llamada `jptx-demo4.ga_propensidad_compra_ready_for_ml`
+CREATE OR REPLACE TABLE `jptx-demo4.ga_propensidad_compra_ready_for_ml` AS (
   -- Selecciona todas las columnas de la tabla original y añade una nueva columna llamada 'split_col'
   SELECT
     *,
@@ -177,7 +186,7 @@ CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml
     END AS split_col
   -- Selecciona datos de la tabla original
   FROM
-    `<TU_DATSET_PERSONAL>.ga_propensidad_compra` raw_features
+    `jptx-demo4.ga_propensidad_compra` raw_features
 );
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -218,7 +227,7 @@ ORDER BY
 LIMIT 10;
 
 -- Solución Ejercicio 3: Extraer características básicas de sesiones
-CREATE OR REPLACE TABLE `clean-silo-405314.<TU_DATSET_PERSONAL>.basic_features` AS (
+CREATE OR REPLACE TABLE `clean-silo-405314.jptx-demo4.basic_features` AS (
   SELECT
     fullVisitorId,
     visitId,
@@ -235,7 +244,7 @@ CREATE OR REPLACE TABLE `clean-silo-405314.<TU_DATSET_PERSONAL>.basic_features` 
 );
 
 -- Solución Ejercicio 4: Analizar comportamiento de compra
-CREATE OR REPLACE TABLE `clean-silo-405314.<TU_DATSET_PERSONAL>.purchase_behavior` AS (
+CREATE OR REPLACE TABLE `clean-silo-405314.jptx-demo4.purchase_behavior` AS (
   SELECT
     fullVisitorId,
     COUNTIF(hits.eCommerceAction.action_type = '6') > 0 AS made_purchase,
@@ -250,7 +259,7 @@ CREATE OR REPLACE TABLE `clean-silo-405314.<TU_DATSET_PERSONAL>.purchase_behavio
 );
 
 -- Solución Ejercicio 5: Crear características para modelo de propensidad
-CREATE OR REPLACE TABLE `clean-silo-405314.<TU_DATSET_PERSONAL>.propensity_model` AS (
+CREATE OR REPLACE TABLE `clean-silo-405314.jptx-demo4.propensity_model` AS (
   SELECT
     s.fullVisitorId,
     MAX(s.visitId) AS last_visit,
