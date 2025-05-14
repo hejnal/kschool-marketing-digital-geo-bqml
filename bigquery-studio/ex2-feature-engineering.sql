@@ -14,17 +14,36 @@ Para consultar datos de múltiples días, usa _TABLE_SUFFIX BETWEEN '20160801' A
 El operador * en ga_sessions_* permite consultar todas las tablas que coincidan con ese patrón.
 */
 
--- 1. Crear un nuevo dataset personal (reemplazar <TU_DATSET_PERSONAL> con tu nombre)
-CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.<TU_DATSET_PERSONAL>`
+-- 1. Crear un nuevo dataset personal (reemplazar <DEMO_CLAUDIAL> con tu nombre)
+CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.DEMO_CLAUDIA`
 OPTIONS(location = 'US');
 
 -- 2. Consultas básicas para explorar el dataset
 
 -- Ejercicio 1: ¿De qué ciudad de EEUU se ha originado más tráfico en GA durante el día 20160801?
 -- Tu código aquí
+SELECT *
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20160801` 
+LIMIT 100;
+
+SELECT geoNetwork.city, COUNT(*)
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20160801` 
+WHERE geoNetwork.country='United States'
+AND geoNetwork.city <> 'not available in demo dataset'
+GROUP BY 1 
+ORDER BY 2 DESC
+LIMIT 1;
 
 -- Ejercicio 2: ¿Qué página de producto ha sido la más visitada (durante el día 20160801) globalmente?
 -- Tu código aquí
+
+SELECT geoNetwork.city, COUNT(*)
+-- FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20160801` 
+
+GROUP BY 1 
+ORDER BY 2 DESC
+LIMIT 1;
+
 
 -- 3. Ejercicios para extraer características relevantes (Opcional)
 
