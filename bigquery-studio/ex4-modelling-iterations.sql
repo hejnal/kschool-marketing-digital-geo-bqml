@@ -1,6 +1,9 @@
 -- [[ Instrucciones Generales ]]
 -- 1. Reemplaza `<TU_NOMBRE>` a lo largo de este script con el nombre que elijas para tu dataset (Puedes usar cmd+D).
 
+-- Para comparar modelos: lo mejor es coger los mismos datos (de evaluacion) y ver 
+
+
 -- #####################################################################################
 -- ## Sección 0: Preparación del Entorno                                              ##
 -- #####################################################################################
@@ -18,11 +21,128 @@ OPTIONS(location = 'US');
 CREATE OR REPLACE MODEL `<TU_NOMBRE>.ga_will_buy_later_logistic_transform` -- TODO: Reemplaza tu_dataset
 TRANSFORM(...) OPTIONS(...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
 
-/*
-
--- Evalua el modelo
--- Intenta hacer predicciones
 */
+
+-- Lo que hago es traerme el modelo que habia hecho en el ejercicio 3 e ir viendo
+-- como podria mejorarlo 
+
+-- ML.QUANTILE_BUCKETIZE function, which lets you break a continuous numerical feature into buckets based on quantiles.
+
+CREATE OR REPLACE MODEL `DEMO_CLAUDIA.ga_propensidad_compra_baseline_model_transform`
+  TRANSFORM(
+   bounces,
+   -- time_on_site, -- numerico: vemos su distribucion
+   ML.QUANTILE_BUCKETIZE(time_on_site, 10) OVER() AS time_on_site_bucketize,
+   -- page_views, -- tambien es numerica, tiene sentifdo hacer bucketize que nos crea particiones (num. que indicamos)
+   ML.QUANTILE_BUCKETIZE(page_views, 10) OVER() AS page_views_bucketize,
+   -- Para las variables categoricas podemos usar:
+   -- Selecciono var. que tenga sentido que creen una unica
+   ML.FEATURE_CROSS(STRUCT(source,medium, channel_grouping)) AS origin,
+   -- source,
+   -- medium,
+   -- channel_grouping,
+   ML.FEATURE_CROSS(STRUCT(CAST(add_to_cart AS STRING) AS add_to_cart,CAST(product_detail_view AS STRING) AS product_detail_view)) AS behaviour,
+   -- add_to_cart,
+   -- product_detail_view,
+   will_buy_later,
+   is_mobile,
+   ML.FEATURE_CROSS(STRUCT(city, country)) AS geo
+  )
+  OPTIONS(
+  -- Especifica el tipo de modelo a crear como Regresión Logística.
+  model_type = "LOGISTIC_REG",
+  -- Divide automáticamente los datos en conjuntos de entrenamiento y evaluación.
+  data_split_method = "AUTO_SPLIT",
+  -- Define la columna "will_buy_later" como la variable objetivo para la predicción.
+  input_label_cols = ["will_buy_later"],
+  -- Habilita la explicabilidad global para el modelo, proporcionando información sobre la importancia de las características.
+  enable_global_explain = TRUE
+) AS
+-- Selecciona las características y la variable objetivo del dataset preparado.
+SELECT
+  bounces,
+  time_on_site,
+  page_views,
+  source,
+  medium,
+  channel_grouping,
+  is_mobile,
+  add_to_cart,
+  product_detail_view,
+  will_buy_later,
+  city, -- añadido ahora
+  country -- añadido ahora
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+FROM
+  `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml`
+WHERE
+  split_col = 'training';
+
+-- Evalua el modelo: Compararemos este modelo y el anterior (ex3)
+
+-- Esta sección evalúa el rendimiento del modelo entrenado utilizando los datos de validación.
+SELECT
+  *, 'model1' as modelo_evaluado
+FROM
+  -- Utiliza la función ML.EVALUATE para evaluar el modelo.
+  ML.EVALUATE(MODEL `DEMO_CLAUDIA.ga_propensidad_compra_baseline_model`,
+    -- Selecciona los datos de validación del dataset preparado.
+    (
+    SELECT
+      bounces,
+      time_on_site,
+      page_views,
+      source,
+      medium,
+      channel_grouping,
+      is_mobile,
+      add_to_cart,
+      product_detail_view,
+      will_buy_later
+    FROM
+     `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml`
+    WHERE
+      split_col = 'validation'),
+    -- Establece el umbral para la clasificación en 0.5.
+    STRUCT(0.2 AS threshold)) -- Aqui le ponemos 0.2 en vez de 0.5
+
+  -- Añadimos asi de facil el nuevo modelo  
+  UNION ALL
+  
+  SELECT
+  *, 'model2' as modelo_evaluado
+  FROM
+  -- Utiliza la función ML.EVALUATE para evaluar el modelo.
+  ML.EVALUATE(MODEL `DEMO_CLAUDIA.ga_propensidad_compra_baseline_model_transform`,
+    -- Selecciona los datos de validación del dataset preparado.
+    (
+    SELECT
+      bounces,
+      time_on_site,
+      page_views,
+      source,
+      medium,
+      channel_grouping,
+      is_mobile,
+      add_to_cart,
+      product_detail_view,
+      will_buy_later,
+      city,
+      country
+    FROM
+     `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml`
+    WHERE
+      split_col = 'validation'),
+    -- Establece el umbral para la clasificación en 0.5.
+    STRUCT(0.2 AS threshold)) -- Aqui le ponemos 0.2 en vez de 0.5
+  ;
+
+-- Aqui se ve accuracy altisima -> puede tener que ver con lo desbalanceado del 
+-- dataset que por otra parte es natural -> siempre vamos a tener menos compras que el resto
+-- de acciones
+  
+-- Intenta hacer predicciones
+
 
 -- Solo visualiza las features
 SELECT * FROM ML.TRANSFORM(MODEL `tu_dataset.ga_will_buy_later_logistic_transform`, (SELECT * FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'test' LIMIT 10));
