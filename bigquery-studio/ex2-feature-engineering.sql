@@ -37,12 +37,15 @@ LIMIT 1;
 -- Ejercicio 2: ¿Qué página de producto ha sido la más visitada (durante el día 20160801) globalmente?
 -- Tu código aquí
 
-SELECT geoNetwork.city, COUNT(*)
--- FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20160801` 
+SELECT hits.page.pagePath, COUNT(*) AS NUM
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_20160801` ,
+UNNEST(hits) AS HITS
 
+WHERE hits.type='PAGE'
+AND hits.page.pagePath NOT IN ('/home', '/basket.html')
 GROUP BY 1 
 ORDER BY 2 DESC
-LIMIT 1;
+LIMIT 5;
 
 
 -- 3. Ejercicios para extraer características relevantes (Opcional)
@@ -62,7 +65,7 @@ LIMIT 1;
 
 -- 4. (Requerido) Prepara los datos para modelar (ejectuar tal cual, creando datos para crear el primer modelo ML)
 -- Crea o reemplaza una tabla llamada `<TU_DATSET_PERSONAL>.ga_propensidad_compra` con datos optimizados para análisis de ventas.
-CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra` AS (
+CREATE TABLE `DEMO_CLAUDIA.ga_propensidad_compra` AS (
   -- Selecciona todas las columnas de la subconsulta.
   SELECT
     *
@@ -166,12 +169,13 @@ CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra` AS (
         -- Agrupa por ID completo del visitante.
         fullVisitorId
     ) USING (full_visitor_id)
-);
+)
+;
 
 
 -- 5. (Requerido) Realiza un split de datos para entrenar y evaluar
--- Crea o reemplaza una tabla llamada `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
-CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml` AS (
+-- Crea o reemplaza una tabla llamada `.ga_propensidad_compra_ready_for_ml`
+CREATE OR REPLACE TABLE `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml` AS (
   -- Selecciona todas las columnas de la tabla original y añade una nueva columna llamada 'split_col'
   SELECT
     *,
@@ -196,7 +200,7 @@ CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml
     END AS split_col
   -- Selecciona datos de la tabla original
   FROM
-    `<TU_DATSET_PERSONAL>.ga_propensidad_compra` raw_features
+    `DEMO_CLAUDIA.ga_propensidad_compra` raw_features
 );
 
 ------------------------------------------------------------------------------------------------------------------------
