@@ -7,7 +7,7 @@ OPTIONS(location = 'US');
 -- 1. (Requerido) Crea y evalua un modelo base
 
 -- Esta sección crea o reemplaza un modelo de regresión logística llamado `ga_propensidad_compra_baseline_model` en el dataset `<TU_DATSET_PERSONAL>`
-CREATE OR REPLACE MODEL `<TU_DATSET_PERSONAL>.ga_propensidad_compra_baseline_model` OPTIONS(
+CREATE OR REPLACE MODEL `DEMO_CLAUDIA.ga_propensidad_compra_baseline_model` OPTIONS(
   -- Especifica el tipo de modelo a crear como Regresión Logística.
   model_type = "LOGISTIC_REG",
   -- Divide automáticamente los datos en conjuntos de entrenamiento y evaluación.
@@ -31,7 +31,7 @@ SELECT
   will_buy_later
 -- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
 FROM
-  `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
+  `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml`
 WHERE
   split_col = 'training';
 
@@ -41,7 +41,7 @@ SELECT
   *
 FROM
   -- Utiliza la función ML.EVALUATE para evaluar el modelo.
-  ML.EVALUATE(MODEL `<TU_DATSET_PERSONAL>.ga_propensidad_compra_baseline_model`,
+  ML.EVALUATE(MODEL `DEMO_CLAUDIA.ga_propensidad_compra_baseline_model`,
     -- Selecciona los datos de validación del dataset preparado.
     (
     SELECT
@@ -56,7 +56,7 @@ FROM
       product_detail_view,
       will_buy_later
     FROM
-     `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
+     `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml`
     WHERE
       split_col = 'validation'),
     -- Establece el umbral para la clasificación en 0.5.
@@ -69,7 +69,7 @@ SELECT
 FROM
   -- Utiliza la función ML.PREDICT para realizar predicciones.
   ML.PREDICT(
-    MODEL `<TU_DATSET_PERSONAL>.ga_propensidad_compra_baseline_model`,
+    MODEL `DEMO_CLAUDIA.ga_propensidad_compra_baseline_model`,
     -- Selecciona los datos de prueba del dataset preparado.
     (
       SELECT
@@ -84,7 +84,7 @@ FROM
         product_detail_view,
         will_buy_later
       FROM
-        `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
+        `DEMO_CLAUDIA.ga_propensidad_compra_ready_for_ml`
       WHERE
         split_col = 'test'
     ),
