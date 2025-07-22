@@ -34,7 +34,7 @@ LIMIT 5;
 --Question: Find all unique pairs of islands that share at least one penguin species in common. For each pair, list the islands and one example of a species they share.
 WITH island_species AS (
     SELECT DISTINCT island, species
-    FROM bigquery-public-data.ml_datasets.penguins
+    FROM `bigquery-public-data.ml_datasets.penguins`
 )
 SELECT i1.island AS island1, i2.island AS island2, ANY_VALUE(i1.species)
 FROM island_species i1
