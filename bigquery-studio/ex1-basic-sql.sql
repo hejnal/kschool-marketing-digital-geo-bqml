@@ -55,3 +55,15 @@ JOIN island_species r
 ON l.island < r.island AND l.species = r.species;
 
 --Question: Find the second heaviest penguin on each island.
+
+WITH ranked_penguins AS(
+  SELECT species, island, body_mass_g,
+  RANK() OVER (PARTITION BY island ORDER BY body_mass_g DESC) AS p_rank
+  FROM `bigquery-public-data.ml_datasets.penguins`
+)
+SELECT * FROM ranked_penguins
+WHERE p_rank = 2;
+
+
+
+
