@@ -1,11 +1,11 @@
 -- [[ Instrucciones Generales ]]
--- 1. Reemplaza `<TU_NOMBRE>` a lo largo de este script con el nombre que elijas para tu dataset (Puedes usar cmd+D).
+-- 1. Reemplaza `marcos_demo_dia4` a lo largo de este script con el nombre que elijas para tu dataset (Puedes usar cmd+D).
 
 -- #####################################################################################
 -- ## Sección 0: Preparación del Entorno                                              ##
 -- #####################################################################################
 -- (Como en la respuesta anterior - Crear `tu_dataset`)
-CREATE SCHEMA IF NOT EXISTS `<TU_NOMBRE>` -- TODO: Reemplaza <TU_NOMBRE>
+CREATE SCHEMA IF NOT EXISTS `marcos_demo_dia4` -- TODO: Reemplaza marcos_demo_dia4
 OPTIONS(location = 'US');
 
 -- #####################################################################################
@@ -15,17 +15,201 @@ OPTIONS(location = 'US');
 -- (Como en la respuesta anterior - Modelo, Evaluación, Predicción para `will_buy_later` con Logistic Regression)
 -- Consulta https://cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-transform
 /*
-CREATE OR REPLACE MODEL `<TU_NOMBRE>.ga_will_buy_later_logistic_transform` -- TODO: Reemplaza tu_dataset
-TRANSFORM(...) OPTIONS(...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_will_buy_later_logistic_transform` -- TODO: Reemplaza tu_dataset
+TRANSFORM(...) OPTIONS(...) AS SELECT ... FROM `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
 
-/*
+*/
+
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_propensidad_compra_with_transform` 
+TRANSFORM(
+  bounces,
+  ML.QUANTILE_BUCKETIZE(time_on_site, 10) OVER() AS time_on_site_bucketized,page_views,
+  source,
+  medium,
+  channel_grouping,
+  is_mobile,
+  add_to_cart,
+  product_detail_view,
+  will_buy_later
+)
+OPTIONS(
+  -- Especifica el tipo de modelo a crear como Regresión Logística.
+  model_type = "LOGISTIC_REG",
+  -- Divide automáticamente los datos en conjuntos de entrenamiento y evaluación.
+  data_split_method = "AUTO_SPLIT",
+  -- Define la columna "will_buy_later" como la variable objetivo para la predicción.
+  input_label_cols = ["will_buy_later"],
+  -- Habilita la explicabilidad global para el modelo, proporcionando información sobre la importancia de las características.
+  enable_global_explain = TRUE
+) AS
+-- Selecciona las características y la variable objetivo del dataset preparado.
+SELECT
+  bounces,
+  time_on_site,
+  page_views,
+  source,
+  medium,
+  channel_grouping,
+  is_mobile,
+  add_to_cart,
+  product_detail_view,
+  will_buy_later
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+FROM
+  `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+WHERE
+  split_col = 'training';
+
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_propensidad_compra_with_transform2` 
+TRANSFORM(
+  ML.QUANTILE_BUCKETIZE(time_on_site, 10) OVER() AS time_on_site_bucketized,
+  ML.QUANTILE_BUCKETIZE(page_views, 10) OVER() AS page_views_bucketized,
+  ML.FEATURE_CROSS(STRUCT(medium, source, channel_grouping)) AS origin,
+  ML.FEATURE_CROSS(STRUCT(CAST(add_to_cart AS STRING) AS add_to_cart, CAST(product_detail_view AS STRING) AS product_detail_view)) AS behaviour,
+  ML.FEATURE_CROSS(STRUCT(city, country)) AS geo,
+  is_mobile,
+  will_buy_later
+)
+OPTIONS(
+  -- Especifica el tipo de modelo a crear como Regresión Logística.
+  model_type = "LOGISTIC_REG",
+  -- Divide automáticamente los datos en conjuntos de entrenamiento y evaluación.
+  data_split_method = "AUTO_SPLIT",
+  -- Define la columna "will_buy_later" como la variable objetivo para la predicción.
+  input_label_cols = ["will_buy_later"],
+  -- Habilita la explicabilidad global para el modelo, proporcionando información sobre la importancia de las características.
+  enable_global_explain = TRUE
+) AS
+-- Selecciona las características y la variable objetivo del dataset preparado.
+SELECT
+  bounces,
+  time_on_site,
+  page_views,
+  source,
+  medium,
+  channel_grouping,
+  is_mobile,
+  add_to_cart,
+  product_detail_view,
+  will_buy_later,
+  city,
+  country
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+FROM
+  `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+WHERE
+  split_col = 'training';
 
 -- Evalua el modelo
 -- Intenta hacer predicciones
-*/
+SELECT * FROM
+(SELECT
+  *, 'baseline' AS model_name
+FROM
+  -- Utiliza la función ML.EVALUATE para evaluar el modelo.
+  ML.EVALUATE(MODEL `marcos_demo_dia4.ga_propensidad_compra_baseline_model`,
+    -- Selecciona los datos de validación del dataset preparado.
+    (
+    SELECT
+      bounces,
+      time_on_site,
+      page_views,
+      source,
+      medium,
+      channel_grouping,
+      is_mobile,
+      add_to_cart,
+      product_detail_view,
+      will_buy_later
+    FROM
+     `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+    WHERE
+      split_col = 'validation'),
+    -- Establece el umbral para la clasificación en 0.5.
+    STRUCT(0.2 AS threshold))
+UNION ALL
+SELECT
+  *, 'transform' AS model_name
+FROM
+  -- Utiliza la función ML.EVALUATE para evaluar el modelo.
+  ML.EVALUATE(MODEL `marcos_demo_dia4.ga_propensidad_compra_with_transform`,
+    -- Selecciona los datos de validación del dataset preparado.
+    (
+    SELECT
+      bounces,
+      time_on_site,
+      page_views,
+      source,
+      medium,
+      channel_grouping,
+      is_mobile,
+      add_to_cart,
+      product_detail_view,
+      will_buy_later
+    FROM
+     `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+    WHERE
+      split_col = 'validation'),
+    -- Establece el umbral para la clasificación en 0.5.
+    STRUCT(0.2 AS threshold))
+UNION ALL
+SELECT
+  *, 'transform2' AS model_name
+FROM
+  -- Utiliza la función ML.EVALUATE para evaluar el modelo.
+  ML.EVALUATE(MODEL `marcos_demo_dia4.ga_propensidad_compra_with_transform2`,
+    -- Selecciona los datos de validación del dataset preparado.
+    (
+    SELECT
+      bounces,
+      time_on_site,
+      page_views,
+      source,
+      medium,
+      channel_grouping,
+      is_mobile,
+      add_to_cart,
+      product_detail_view,
+      will_buy_later,
+      city,
+      country
+    FROM
+     `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+    WHERE
+      split_col = 'validation'),
+    -- Establece el umbral para la clasificación en 0.5.
+    STRUCT(0.2 AS threshold))
+UNION ALL
+SELECT
+  *, 'xgb_transform2' AS model_name
+FROM
+  -- Utiliza la función ML.EVALUATE para evaluar el modelo.
+  ML.EVALUATE(MODEL `marcos_demo_dia4.ga_propensidad_compra_xgboost`,
+    -- Selecciona los datos de validación del dataset preparado.
+    (
+    SELECT
+      bounces,
+      time_on_site,
+      page_views,
+      source,
+      medium,
+      channel_grouping,
+      is_mobile,
+      add_to_cart,
+      product_detail_view,
+      will_buy_later,
+      city,
+      country
+    FROM
+     `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+    WHERE
+      split_col = 'validation'),
+    -- Establece el umbral para la clasificación en 0.5.
+    STRUCT(0.2 AS threshold)))
+ORDER BY model_name ASC;
 
 -- Solo visualiza las features
-SELECT * FROM ML.TRANSFORM(MODEL `tu_dataset.ga_will_buy_later_logistic_transform`, (SELECT * FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'test' LIMIT 10));
+SELECT * FROM ML.TRANSFORM(MODEL `marcos_demo_dia4.ga_propensidad_compra_with_transform2`, (SELECT * FROM `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'test' LIMIT 10));
 
 
 -- #####################################################################################
@@ -34,9 +218,49 @@ SELECT * FROM ML.TRANSFORM(MODEL `tu_dataset.ga_will_buy_later_logistic_transfor
 -- #####################################################################################
 -- (Como en la respuesta anterior - Modelo XGBoost para `will_buy_later`)
 /*
-CREATE OR REPLACE MODEL `<TU_NOMBRE>.ga_will_buy_later_xgboost_transform` -- TODO: Reemplaza tu_dataset
-TRANSFORM(...) OPTIONS(model_type = "BOOSTED_TREE_CLASSIFIER", ...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_will_buy_later_xgboost_transform` -- TODO: Reemplaza tu_dataset
+TRANSFORM(...) OPTIONS(model_type = "BOOSTED_TREE_CLASSIFIER", ...) AS SELECT ... FROM `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
 */
+
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_propensidad_compra_xgboost` 
+TRANSFORM(
+  ML.QUANTILE_BUCKETIZE(time_on_site, 10) OVER() AS time_on_site_bucketized,
+  ML.QUANTILE_BUCKETIZE(page_views, 10) OVER() AS page_views_bucketized,
+  ML.FEATURE_CROSS(STRUCT(medium, source, channel_grouping)) AS origin,
+  ML.FEATURE_CROSS(STRUCT(CAST(add_to_cart AS STRING) AS add_to_cart, CAST(product_detail_view AS STRING) AS product_detail_view)) AS behaviour,
+  ML.FEATURE_CROSS(STRUCT(city, country)) AS geo,
+  is_mobile,
+  will_buy_later
+)
+OPTIONS(
+  -- Especifica el tipo de modelo a crear como Regresión Logística.
+  model_type = "BOOSTED_TREE_CLASSIFIER",
+  -- Divide automáticamente los datos en conjuntos de entrenamiento y evaluación.
+  data_split_method = "AUTO_SPLIT",
+  -- Define la columna "will_buy_later" como la variable objetivo para la predicción.
+  input_label_cols = ["will_buy_later"],
+  -- Habilita la explicabilidad global para el modelo, proporcionando información sobre la importancia de las características.
+  enable_global_explain = TRUE
+) AS
+-- Selecciona las características y la variable objetivo del dataset preparado.
+SELECT
+  bounces,
+  time_on_site,
+  page_views,
+  source,
+  medium,
+  channel_grouping,
+  is_mobile,
+  add_to_cart,
+  product_detail_view,
+  will_buy_later,
+  city,
+  country
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+FROM
+  `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml`
+WHERE
+  split_col = 'training';
 
 -- #####################################################################################
 -- ## Sección 2.5: Preparación de Datos Específicos para Predecir 'Añadir al Carrito' ##
@@ -46,7 +270,7 @@ TRANSFORM(...) OPTIONS(model_type = "BOOSTED_TREE_CLASSIFIER", ...) AS SELECT ..
 -- !! ASEGÚRATE DE HABER EJECUTADO ESTA CONSULTA ANTES DE PASAR A LA SECCIÓN 3 !!
 -- Esta es la consulta que proporcionaste.
 -- Reemplaza `tu_dataset` con tus valores.
-CREATE OR REPLACE TABLE `<TU_NOMBRE>.propensidad_anadir_al_carrito` AS ( -- TODO: Reemplaza tu_dataset
+CREATE OR REPLACE TABLE `marcos_demo_dia4.propensidad_anadir_al_carrito` AS ( -- TODO: Reemplaza tu_dataset
   SELECT
     *
   FROM
@@ -114,7 +338,7 @@ CREATE OR REPLACE TABLE `<TU_NOMBRE>.propensidad_anadir_al_carrito` AS ( -- TODO
 --    BigQuery ML se encargará de dividir los datos automáticamente.
 
 -- Paso 2.5.2: Verificar la tabla creada (opcional)
--- SELECT * FROM `<TU_NOMBRE>.propensidad_anadir_al_carrito` LIMIT 10; -- TODO: Reemplaza tu_dataset
+-- SELECT * FROM `marcos_demo_dia4.propensidad_anadir_al_carrito` LIMIT 10; -- TODO: Reemplaza tu_dataset
 
 -- #####################################################################################
 -- ## Sección 3: Cambiando el Objetivo - Predecir `add_to_cart` (Sesión Actual)     ##
@@ -124,7 +348,7 @@ CREATE OR REPLACE TABLE `<TU_NOMBRE>.propensidad_anadir_al_carrito` AS ( -- TODO
 -- Paso 3.1: Crear un nuevo modelo para predecir `add_to_cart` en la sesión actual.
 -- Este modelo utilizará la tabla `propensidad_anadir_al_carrito` que preparaste.
 -- Elegiremos BOOSTED_TREE_CLASSIFIER como ejemplo.
-CREATE OR REPLACE MODEL `<TU_NOMBRE>.ga_add_to_cart_current_session_model` -- TODO: Reemplaza tu_proyecto y tu_dataset
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_add_to_cart_current_session_model` -- TODO: Reemplaza tu_proyecto y tu_dataset
 TRANSFORM(
   -- Características numéricas directas o que serán bucketizadas
   bounces,
@@ -179,7 +403,7 @@ SELECT
   -- will_add_to_cart_later, -- Excluida como feature por ahora, ver comentario en TRANSFORM
   add_to_cart -- Esta es la etiqueta que el modelo aprenderá a predecir
 FROM
-  `<TU_NOMBRE>.propensidad_anadir_al_carrito`; -- ¡Importante! Usamos la nueva tabla. No hay `WHERE split_col`.
+  `marcos_demo_dia4.propensidad_anadir_al_carrito`; -- ¡Importante! Usamos la nueva tabla. No hay `WHERE split_col`.
 
 -- Paso 3.2: [[ Ejercicio para el usuario ]] Evaluar tu nuevo modelo para `add_to_cart`.
 -- Escribe la consulta SQL para evaluar el rendimiento de tu modelo `ga_add_to_cart_current_session_model`.
@@ -231,6 +455,44 @@ FROM
   );
 */
 
+-- Modelo de añadir al carrito
+
+CREATE OR REPLACE MODEL `marcos_demo_dia4.ga_propensidad_carrito_xgboost` 
+TRANSFORM(
+  ML.QUANTILE_BUCKETIZE(time_on_site, 10) OVER() AS time_on_site_bucketized,
+  ML.QUANTILE_BUCKETIZE(page_views, 10) OVER() AS page_views_bucketized,
+  ML.FEATURE_CROSS(STRUCT(medium, source, channel_grouping)) AS origin,
+  product_detail_view,
+  ML.FEATURE_CROSS(STRUCT(city, country)) AS geo,
+  is_mobile,
+  will_add_to_cart_later
+)
+OPTIONS(
+  -- Especifica el tipo de modelo a crear como Regresión Logística.
+  model_type = "BOOSTED_TREE_CLASSIFIER",
+  -- Divide automáticamente los datos en conjuntos de entrenamiento y evaluación.
+  data_split_method = "AUTO_SPLIT",
+  -- Define la columna "will_add_to_cart_later" como la variable objetivo para la predicción.
+  input_label_cols = ["will_add_to_cart_later"],
+  -- Habilita la explicabilidad global para el modelo, proporcionando información sobre la importancia de las características.
+  enable_global_explain = TRUE
+) AS
+-- Selecciona las características y la variable objetivo del dataset preparado.
+SELECT
+  bounces,
+  time_on_site,
+  page_views,
+  source,
+  medium,
+  channel_grouping,
+  is_mobile,
+  product_detail_view,
+  will_add_to_cart_later,
+  city,
+  country
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+FROM
+  `marcos_demo_dia4.propensidad_anadir_al_carrito`;
 
 ------------------------------------------------------------------------------------------------------------------------
 -- SOLUCIONES (referencia)
