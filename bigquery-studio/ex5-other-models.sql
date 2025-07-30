@@ -6,11 +6,11 @@
 -- ====================================================================
 -- PCA es una técnica de reducción de dimensionalidad. Aquí creamos dos modelos PCA
 -- para reducir las características de audio de un dataset de Spotify.
--- Reemplaza <TU_NOMBRE> con` el ID de tu propio dataset en BigQuery.
+-- Reemplaza marcos_demo_dia4 con` el ID de tu propio dataset en BigQuery.
 
 -- Crea o reemplaza un modelo PCA con 3 componentes principales.
 CREATE
-OR REPLACE MODEL `<TU_NOMBRE>.pca3_model` OPTIONS(
+OR REPLACE MODEL `marcos_demo_dia4.pca3_model` OPTIONS(
   model_type = "PCA", -- Especifica que el modelo es de tipo PCA
   num_principal_components = 3 -- Define el número de componentes principales a extraer
 ) AS
@@ -26,7 +26,7 @@ FROM
 
 -- Crea o reemplaza un modelo PCA con 2 componentes principales.
 CREATE
-OR REPLACE MODEL `<TU_NOMBRE>.pca2_model` OPTIONS(
+OR REPLACE MODEL `marcos_demo_dia4.pca2_model` OPTIONS(
   model_type = "PCA", -- Especifica que el modelo es de tipo PCA
   num_principal_components = 2 -- Define el número de componentes principales a extraer
 ) AS
@@ -45,17 +45,17 @@ FROM
 SELECT
     *
 FROM
-    ML.PRINCIPAL_COMPONENT_INFO(MODEL `<TU_NOMBRE>.pca2_model`);
+    ML.PRINCIPAL_COMPONENT_INFO(MODEL `marcos_demo_dia4.pca2_model`);
 
 -- Crea o reemplaza una tabla para almacenar los resultados de PCA con 2 componentes para el año 2010.
 -- Usamos ML.PREDICT para aplicar el modelo PCA a los datos y obtener las puntuaciones de los componentes.
 CREATE
-OR REPLACE TABLE `<TU_NOMBRE>.spotify_clusters_pca_2_2010` AS (
+OR REPLACE TABLE `marcos_demo_dia4.spotify_clusters_pca_2_2010` AS (
     SELECT
         * -- Selecciona todas las columnas resultantes de la predicción
     FROM
         ML.PREDICT(
-            model `<TU_NOMBRE>.pca2_model`, -- Especifica el modelo PCA a usar
+            model `marcos_demo_dia4.pca2_model`, -- Especifica el modelo PCA a usar
             (
                 SELECT
                     acousticness,
@@ -77,12 +77,12 @@ OR REPLACE TABLE `<TU_NOMBRE>.spotify_clusters_pca_2_2010` AS (
 -- Crea o reemplaza una tabla para almacenar los resultados de PCA con 3 componentes para el año 2010.
 -- Similar al anterior, pero usando el modelo PCA de 3 componentes.
 CREATE
-OR REPLACE TABLE `<TU_NOMBRE>.spotify_clusters_pca_3_2010` AS (
+OR REPLACE TABLE `marcos_demo_dia4.spotify_clusters_pca_3_2010` AS (
     SELECT
         * -- Selecciona todas las columnas resultantes de la predicción
     FROM
         ML.PREDICT(
-            model `<TU_NOMBRE>.pca3_model`, -- Especifica el modelo PCA a usar
+            model `marcos_demo_dia4.pca3_model`, -- Especifica el modelo PCA a usar
             (
                 SELECT
                     acousticness,
@@ -106,12 +106,12 @@ OR REPLACE TABLE `<TU_NOMBRE>.spotify_clusters_pca_3_2010` AS (
 -- ====================================================================
 -- K-Means es un algoritmo de clustering no supervisado que agrupa datos en K grupos.
 -- Aquí creamos un modelo K-Means para agrupar canciones de Spotify basándose en sus características de audio.
--- `Reemplaza <TU_NOMBRE> con` el ID de tu propio dataset.
+-- `Reemplaza marcos_demo_dia4 con` el ID de tu propio dataset.
 
 -- Crea o reemplaza un modelo K-Means con 100 clusters.
 -- reemplaza el dataset_id de salida y kmeans_table_id con los tuyos
 CREATE
-OR REPLACE MODEL `<TU_NOMBRE>.kmeans_table` OPTIONS(
+OR REPLACE MODEL `marcos_demo_dia4.kmeans_table` OPTIONS(
     model_type = "kmeans", -- Especifica que el modelo es de tipo K-Means
     kmeans_init_method = "kmeans++", -- Método de inicialización de centroides
     distance_type = "cosine", -- Tipo de distancia a usar (coseno)
@@ -135,12 +135,12 @@ FROM
 -- crea clusters para el año 2010 aplicando el modelo K-Means a los datos de ese año.
 -- ML.PREDICT asigna cada fila a su cluster más cercano.
 CREATE
-OR REPLACE TABLE `<TU_NOMBRE>.kmeans_clusters_2010` AS (
+OR REPLACE TABLE `marcos_demo_dia4.kmeans_clusters_2010` AS (
     SELECT
         * -- Selecciona todas las columnas, incluyendo la asignación de cluster (CENTROID_ID)
     FROM
         ML.PREDICT(
-            MODEL `<TU_NOMBRE>.kmeans_table`, -- Especifica el modelo K-Means a usar
+            MODEL `marcos_demo_dia4.kmeans_table`, -- Especifica el modelo K-Means a usar
             (
                 SELECT
                     * -- Selecciona todas las columnas de los datos de entrada
@@ -162,7 +162,7 @@ WITH artist_clusters AS (
         CENTROID_ID AS cluster_id,
         COUNT(*) AS songs_num
     FROM
-        `<TU_NOMBRE>.kmeans_clusters_2010` -- Usa la tabla con los resultados del clustering
+        `marcos_demo_dia4.kmeans_clusters_2010` -- Usa la tabla con los resultados del clustering
     GROUP BY
         1, 2, 3
 ),
@@ -174,7 +174,7 @@ ranked_clusters AS (
         cluster_id,
         songs_num,
         ROW_NUMBER() OVER(
-            PARTITION BY year, artist -- Particiona por año y artista
+            PARTITION BY year, cluster_id -- Particiona por año y artista
             ORDER BY
                 songs_num DESC -- Ordena por número de canciones descendente
         ) AS cluster_rank -- Asigna un rango dentro de cada partición
@@ -196,8 +196,14 @@ WHERE
 -- Sección 3: Ejemplo de ARIMA
 -- ====================================================================
 -- ARIMA es un modelo de series temporales utilizado para pronosticar valores futuros basándose en datos históricos.
+-- (primero crea una table - indie_label_visits_per_day, con fuentes de GA data)
 -- Aquí creamos un modelo ARIMA para predecir visitas a una página web.
--- `Reemplaza <TU_NOMBRE> con` el ID de tu propio dataset.
+-- `Reemplaza marcos_demo_dia4 con` el ID de tu propio dataset.
+
+CREATE TABLE `marcos_demo_dia4.indie_label_visits_per_day` AS
+SELECT parsed_date, COUNT(*) AS total_visits
+FROM `clean-silo-405314.raw_data.ga_events_1y_usa`
+GROUP BY 1;
 
 -- ver cómo se ven los datos de visitas agregados por día.
 SELECT
@@ -209,9 +215,9 @@ GROUP BY
   1; -- Agrupa por fecha
 
 -- modelo con decompose_time_series
--- Crea o reemplaza un modelo ARIMA+ para predecir visitas (primero crea una table - indie_label_visits_per_day, con fuentes de GA data)
+-- Crea o reemplaza un modelo ARIMA+ para predecir visitas 
 CREATE OR REPLACE MODEL
-  `<TU_NOMBRE>.web_visits_arima_model` OPTIONS (
+  `marcos_demo_dia4.web_visits_arima_model` OPTIONS (
     model_type = "ARIMA_PLUS", -- Especifica el tipo de modelo como ARIMA+
     time_series_timestamp_col = "parsed_date", -- Columna con la marca de tiempo
     time_series_data_col = "total_visits", -- Columna con los datos de la serie temporal
@@ -224,7 +230,7 @@ CREATE OR REPLACE MODEL
     parsed_date,
     SUM(total_visits) AS total_visits
   FROM
-    raw_data.indie_label_visits_per_day
+    marcos_demo_dia4.indie_label_visits_per_day
   GROUP BY
     1 -- Agrupa por fecha para obtener el total diario
     );
@@ -234,14 +240,14 @@ CREATE OR REPLACE MODEL
 SELECT
   *
 FROM
-  ML.ARIMA_EVALUATE(MODEL `<TU_NOMBRE>.web_visits_arima_model`);
+  ML.ARIMA_EVALUATE(MODEL `marcos_demo_dia4.web_visits_arima_model`);
 
 -- realizar una previsión (forecast) de visitas para los próximos 30 días.
 -- ML.FORECAST utiliza el modelo ARIMA para predecir valores futuros.
 SELECT
   *
 FROM
-  ML.FORECAST(MODEL `<TU_NOMBRE>.web_visits_arima_model`,
+  ML.FORECAST(MODEL `marcos_demo_dia4.web_visits_arima_model`,
     STRUCT(30 AS horizon, -- Número de pasos de tiempo a predecir (30 días)
       0.8 AS confidence_level)); -- Nivel de confianza para los intervalos de predicción
 
@@ -250,7 +256,7 @@ FROM
 SELECT
   *
 FROM
-  ML.EXPLAIN_FORECAST(MODEL `<TU_NOMBRE>.web_visits_arima_model`,
+  ML.EXPLAIN_FORECAST(MODEL `marcos_demo_dia4.web_visits_arima_model`,
     STRUCT(30 AS horizon, -- Número de pasos de tiempo de la previsión a explicar
       0.8 AS confidence_level)); -- Nivel de confianza
 
@@ -262,7 +268,7 @@ WITH
     parsed_date AS history_timestmap,
     SUM(total_visits) AS history_value
   FROM
-    raw_data.indie_label_visits_per_day
+    marcos_demo_dia4.indie_label_visits_per_day
   GROUP BY
     1)
 -- Une los datos históricos con los datos de previsión usando UNION ALL.
@@ -282,7 +288,7 @@ SELECT
   prediction_interval_lower_bound, -- Incluye el límite inferior del intervalo de predicción
   prediction_interval_upper_bound -- Incluye el límite superior del intervalo de predicción
 FROM
-  ML.FORECAST(MODEL `<TU_NOMBRE>.web_visits_arima_model`,
+  ML.FORECAST(MODEL `marcos_demo_dia4.web_visits_arima_model`,
     STRUCT(30 AS horizon, -- Previsión para 30 días
       0.8 AS confidence_level)); -- Nivel de confianza
 
@@ -290,20 +296,20 @@ FROM
 -- Ejercicios
 -- ====================================================================
 -- Aquí tienes algunos ejercicios basados en el código SQL anterior para practicar tus conocimientos de BigQuery ML y SQL.
--- Recuerda `reemplazar <TU_NOMBRE> con` el ID de tu propio dataset en BigQuery antes de ejecutar cualquier consulta.
+-- Recuerda `reemplazar marcos_demo_dia4 con` el ID de tu propio dataset en BigQuery antes de ejecutar cualquier consulta.
 
 -- Ejercicio 1: Consultar los Resultados de PCA (2 Componentes)
--- La tabla `<TU_NOMBRE>.spotify_clusters_pca_2_2010` contiene las puntuaciones de los dos componentes principales
+-- La tabla `marcos_demo_dia4.spotify_clusters_pca_2_2010` contiene las puntuaciones de los dos componentes principales
 -- para las canciones de Spotify del año 2010, junto con el artista y la popularidad.
 -- Escribe una consulta SQL para encontrar las 10 canciones más populares (según la columna `popularity`)
--- en la tabla `<TU_NOMBRE>.spotify_clusters_pca_2_2010`. Muestra el artista, la popularidad y las puntuaciones
+-- en la tabla `marcos_demo_dia4.spotify_clusters_pca_2_2010`. Muestra el artista, la popularidad y las puntuaciones
 -- de los dos componentes principales (`principal_component_1` y `principal_component_2`).
 
 -- Ejercicio 2: Analizar Clusters K-Means (Año Diferente)
--- El código crea una tabla de clusters K-Means para el año 2010 `(<TU_NOMBRE>.kmeans_clusters_2010`).
+-- El código crea una tabla de clusters K-Means para el año 2010 `(marcos_demo_dia4.kmeans_clusters_2010`).
 -- Modifica la consulta que muestra el artista más popular por cluster para que funcione con datos de
 -- un año diferente, por ejemplo, el año `2015`. Para ello, asumirás que existe una tabla
--- `<TU_NOMBRE>.kmeans_clusters_2015` con la misma estructura que `<TU_NOMBRE>.kmeans_clusters_2010`.
+-- `marcos_demo_dia4.kmeans_clusters_2015` con la misma estructura que `marcos_demo_dia4.kmeans_clusters_2010`.
 -- Adapta la CTE `artist_clusters` y las subsiguientes partes de la consulta para usar esta nueva tabla.
 
 -- Ejercicio 3: Consultar la Previsión ARIMA
@@ -316,29 +322,29 @@ FROM
 -- Soluciones a los Ejercicios
 -- ====================================================================
 -- Aquí están las soluciones completas para los ejercicios propuestos.
--- Recuerda `reemplazar <TU_NOMBRE> con` el ID de tu propio dataset.
+-- Recuerda `reemplazar marcos_demo_dia4 con` el ID de tu propio dataset.
 
 -- --------------------------------------------------------------------
 -- Solución Ejercicio 1: Consultar los Resultados de PCA (2 Componentes)
 -- --------------------------------------------------------------------
-/*
+
 SELECT
     artist, -- Nombre del artista
     popularity, -- Nivel de popularidad de la canción
     principal_component_1, -- Puntuación del primer componente principal
     principal_component_2 -- Puntuación del segundo componente principal
 FROM
-    `<TU_NOMBRE>.spotify_clusters_pca_2_2010` -- Tabla con los resultados de PCA
+    `marcos_demo_dia4.spotify_clusters_pca_2_2010` -- Tabla con los resultados de PCA
 ORDER BY
     popularity DESC -- Ordena por popularidad de forma descendente
 LIMIT 10; -- Limita los resultados a las 10 canciones más populares
-*/
+
 
 -- --------------------------------------------------------------------
 -- Solución Ejercicio 2: Analizar Clusters K-Means (Año Diferente - 2015)
 -- --------------------------------------------------------------------
--- Asumimos que ya existe la tabla `<TU_NOMBRE>.kmeans_clusters_2015`
-/*
+-- Asumimos que ya existe la tabla `marcos_demo_dia4.kmeans_clusters_2015`
+
 WITH artist_clusters AS (
     -- Agrupa las canciones por año, artista y ID de clúster para el año 2015
     SELECT
@@ -347,7 +353,7 @@ WITH artist_clusters AS (
         CENTROID_ID AS cluster_id,
         COUNT(*) AS songs_num
     FROM
-        `<TU_NOMBRE>.kmeans_clusters_2015` -- Usa la tabla para el año 2015
+        `marcos_demo_dia4.kmeans_clusters_2015` -- Usa la tabla para el año 2015
     GROUP BY
         1, 2, 3
 ),
@@ -376,12 +382,12 @@ FROM
     ranked_clusters
 WHERE
     cluster_rank = 1;
-*/
+
 
 -- --------------------------------------------------------------------
 -- Solución Ejercicio 3: Consultar la Previsión ARIMA
 -- --------------------------------------------------------------------
-/*
+
 -- Repetimos la consulta que concatena histórico y previsión, pero esta vez
 -- la usamos como subconsulta o CTE para filtrar solo las filas de previsión.
 SELECT
@@ -397,7 +403,7 @@ FROM (
         parsed_date AS history_timestmap,
         SUM(total_visits) AS history_value
       FROM
-        raw_data.indie_label_visits_per_day
+        marcos_demo_dia4.indie_label_visits_per_day
       GROUP BY
         1)
     SELECT
@@ -416,10 +422,9 @@ FROM (
       prediction_interval_lower_bound,
       prediction_interval_upper_bound
     FROM
-      ML.FORECAST(MODEL `<TU_NOMBRE>.web_visits_arima_model`,
+      ML.FORECAST(MODEL `marcos_demo_dia4.web_visits_arima_model`,
         STRUCT(30 AS horizon,
           0.8 AS confidence_level))
 )
 WHERE
     history_value IS NULL; -- Filtra las filas donde el valor histórico es NULL (es decir, las filas de previsión)
-*/
