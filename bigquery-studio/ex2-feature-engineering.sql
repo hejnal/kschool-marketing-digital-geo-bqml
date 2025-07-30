@@ -15,16 +15,34 @@ El operador * en ga_sessions_* permite consultar todas las tablas que coincidan 
 */
 
 -- 1. Crear un nuevo dataset personal (reemplazar <TU_DATSET_PERSONAL> con tu nombre)
-CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.<TU_DATSET_PERSONAL>`
+CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.marcos_demo_dia4`
 OPTIONS(location = 'US');
 
 -- 2. Consultas básicas para explorar el dataset
 
--- Ejercicio 1: ¿De qué ciudad de EEUU se ha originado más tráfico en GA durante el día 20160801?
+-- Ejercicio 1: ¿De qué ciudad de EEUU se ha originado más tráfico en GA durante el día geoNetwork.city, geoNetwork.city?
 -- Tu código aquí
+
+SELECT geoNetwork.city, COUNT(*) AS num_sessions
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`
+WHERE _TABLE_SUFFIX = '20160801'
+AND geoNetwork.country = 'United States'
+AND geoNetwork.city <> 'not available in demo dataset'
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 1;
 
 -- Ejercicio 2: ¿Qué página de producto ha sido la más visitada (durante el día 20160801) globalmente?
 -- Tu código aquí
+
+SELECT hits.page.pagePath, COUNT(*) AS num_pages
+FROM `bigquery-public-data.google_analytics_sample.ga_sessions_*`,
+UNNEST (hits) AS hits
+WHERE _TABLE_SUFFIX = '20160801'
+AND hits.type = 'PAGE' AND hits.page.pagePath NOT IN ('/home', '/basket.html')
+GROUP BY 1
+ORDER BY 2 DESC
+LIMIT 5;
 
 -- 3. Ejercicios para extraer características relevantes (Opcional)
 
@@ -43,7 +61,7 @@ OPTIONS(location = 'US');
 
 -- 4. (Requerido) Prepara los datos para modelar (ejectuar tal cual, creando datos para crear el primer modelo ML)
 -- Crea o reemplaza una tabla llamada `<TU_DATSET_PERSONAL>.ga_propensidad_compra` con datos optimizados para análisis de ventas.
-CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra` AS (
+CREATE OR REPLACE TABLE `marcos_demo_dia4.ga_propensidad_compra` AS (
   -- Selecciona todas las columnas de la subconsulta.
   SELECT
     *
@@ -152,7 +170,7 @@ CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra` AS (
 
 -- 5. (Requerido) Realiza un split de datos para entrenar y evaluar
 -- Crea o reemplaza una tabla llamada `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
-CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml` AS (
+CREATE OR REPLACE TABLE `marcos_demo_dia4.ga_propensidad_compra_ready_for_ml` AS (
   -- Selecciona todas las columnas de la tabla original y añade una nueva columna llamada 'split_col'
   SELECT
     *,
@@ -177,7 +195,7 @@ CREATE OR REPLACE TABLE `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml
     END AS split_col
   -- Selecciona datos de la tabla original
   FROM
-    `<TU_DATSET_PERSONAL>.ga_propensidad_compra` raw_features
+    `marcos_demo_dia4.ga_propensidad_compra` raw_features
 );
 
 ------------------------------------------------------------------------------------------------------------------------
