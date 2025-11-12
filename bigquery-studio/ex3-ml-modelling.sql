@@ -29,11 +29,11 @@ SELECT
   add_to_cart,
   product_detail_view,
   will_buy_later
--- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = False.
 FROM
   `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
 WHERE
-  split_col = 'training';
+  split_col = False;
 
 -- Evaluar modelo
 -- Esta sección evalúa el rendimiento del modelo entrenado utilizando los datos de validación.
@@ -58,7 +58,7 @@ FROM
     FROM
      `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
     WHERE
-      split_col = 'validation'),
+      split_col = True),
     -- Establece el umbral para la clasificación en 0.5.
     STRUCT(0.5 AS threshold));
 
@@ -86,7 +86,7 @@ FROM
       FROM
         `<TU_DATSET_PERSONAL>.ga_propensidad_compra_ready_for_ml`
       WHERE
-        split_col = 'test'
+        split_col = True
     ),
     -- Establece el umbral para la clasificación en 0.5.
     STRUCT(0.5 AS threshold)
