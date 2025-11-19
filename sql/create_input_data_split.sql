@@ -16,12 +16,10 @@ CREATE OR REPLACE TABLE `<dataset_id>.<table_name>_ready_for_ml` AS (
           10
         )
       )
-      -- If the modulo is 9, assign 'test' to the split_col
-      WHEN 9 THEN 'test'
-      -- If the modulo is 8, assign 'validation' to the split_col
-      WHEN 8 THEN 'validation'
-      -- Otherwise, assign 'training' to the split_col
-      ELSE 'training'
+      -- Si el módulo es 9, asigna False a la columna split_col - meaning Evaluation
+      WHEN 9 THEN True
+      -- De lo contrario, asigna False a la columna split_col - meaning Training
+      ELSE False
     END AS split_col
   -- Select data from the original table
   FROM

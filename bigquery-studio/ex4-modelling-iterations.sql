@@ -16,7 +16,7 @@ OPTIONS(location = 'US');
 -- Consulta https://cloud.google.com/bigquery/docs/reference/standard-sql/bigqueryml-syntax-transform
 /*
 CREATE OR REPLACE MODEL `<TU_NOMBRE>.ga_will_buy_later_logistic_transform` -- TODO: Reemplaza tu_dataset
-TRANSFORM(...) OPTIONS(...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
+TRANSFORM(...) OPTIONS(...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = False;
 
 /*
 
@@ -25,7 +25,7 @@ TRANSFORM(...) OPTIONS(...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compr
 */
 
 -- Solo visualiza las features
-SELECT * FROM ML.TRANSFORM(MODEL `tu_dataset.ga_will_buy_later_logistic_transform`, (SELECT * FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'test' LIMIT 10));
+SELECT * FROM ML.TRANSFORM(MODEL `tu_dataset.ga_will_buy_later_logistic_transform`, (SELECT * FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = True LIMIT 10));
 
 
 -- #####################################################################################
@@ -35,7 +35,7 @@ SELECT * FROM ML.TRANSFORM(MODEL `tu_dataset.ga_will_buy_later_logistic_transfor
 -- (Como en la respuesta anterior - Modelo XGBoost para `will_buy_later`)
 /*
 CREATE OR REPLACE MODEL `<TU_NOMBRE>.ga_will_buy_later_xgboost_transform` -- TODO: Reemplaza tu_dataset
-TRANSFORM(...) OPTIONS(model_type = "BOOSTED_TREE_CLASSIFIER", ...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = 'training';
+TRANSFORM(...) OPTIONS(model_type = "BOOSTED_TREE_CLASSIFIER", ...) AS SELECT ... FROM `<TU_NOMBRE>.ga_propensidad_compra_ready_for_ml` WHERE split_col = False;
 */
 
 -- #####################################################################################
@@ -268,8 +268,8 @@ SELECT
   add_to_cart,
   product_detail_view,
   will_buy_later
--- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = 'training'.
+-- Utiliza el dataset preparado para el entrenamiento, filtrando por filas con split_col = False.
 FROM
   `whejna_demo_dia4.ga_propensidad_compra_ready_for_ml`
 WHERE
-  split_col = 'training';
+  split_col = False;

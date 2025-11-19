@@ -26,11 +26,11 @@ SELECT
   add_to_cart,
   product_detail_view,
   will_buy_later
--- Uses the prepared dataset for training, filtering for rows with split_col = 'training'.
+-- Uses the prepared dataset for training, filtering for rows with split_col = False.
 FROM
   `<curated_dataset>.<table_name>_ready_for_ml`
 WHERE
-  split_col = 'training';
+  split_col = False;
 
 -- evaluate model
 -- This section evaluates the performance of the trained model using the validation data.
@@ -55,7 +55,7 @@ FROM
     FROM
      `<curated_dataset>.<table_name>_ready_for_ml`
     WHERE
-      split_col = 'validation'),
+      split_col = True),
     -- Sets the threshold for classification at 0.5.
     STRUCT(0.5 AS threshold));
 
@@ -83,7 +83,7 @@ FROM
       FROM
         `<curated_dataset>.<table_name>_ready_for_ml`
       WHERE
-        split_col = 'test'
+        split_col = True
     ),
     -- Sets the threshold for classification at 0.5.
     STRUCT(0.5 AS threshold)

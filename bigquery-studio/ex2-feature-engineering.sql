@@ -168,12 +168,10 @@ CREATE OR REPLACE TABLE `<dataset_jesus>.ga_propensidad_compra_ready_for_ml` AS 
           10
         )
       )
-      -- Si el módulo es 9, asigna 'test' a la columna split_col
-      WHEN 9 THEN 'test'
-      -- Si el módulo es 8, asigna 'validation' a la columna split_col
-      WHEN 8 THEN 'validation'
-      -- De lo contrario, asigna 'training' a la columna split_col
-      ELSE 'training'
+      -- Si el módulo es 9, asigna False a la columna split_col - meaning Evaluation
+      WHEN 9 THEN True
+      -- De lo contrario, asigna False a la columna split_col - meaning Training
+      ELSE False
     END AS split_col
   -- Selecciona datos de la tabla original
   FROM
