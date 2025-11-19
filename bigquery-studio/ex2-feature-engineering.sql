@@ -14,8 +14,8 @@ Para consultar datos de múltiples días, usa _TABLE_SUFFIX BETWEEN '20160801' A
 El operador * en ga_sessions_* permite consultar todas las tablas que coincidan con ese patrón.
 */
 
--- 1. Crear un nuevo dataset personal (reemplazar <dataset_jesus> con tu nombre)
-CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.<dataset_jesus>`
+-- 1. Crear un nuevo dataset personal (reemplazar dataset_jesus con tu nombre)
+CREATE SCHEMA IF NOT EXISTS `clean-silo-405314.dataset_jesus`
 OPTIONS(location = 'US');
 
 -- 2. Consultas básicas para explorar el dataset
@@ -42,8 +42,8 @@ OPTIONS(location = 'US');
 
 
 -- 4. (Requerido) Prepara los datos para modelar (ejectuar tal cual, creando datos para crear el primer modelo ML)
--- Crea o reemplaza una tabla llamada `<dataset_jesus>.ga_propensidad_compra` con datos optimizados para análisis de ventas.
-CREATE OR REPLACE TABLE `<dataset_jesus>.ga_propensidad_compra` AS (
+-- Crea o reemplaza una tabla llamada `dataset_jesus.ga_propensidad_compra` con datos optimizados para análisis de ventas.
+CREATE OR REPLACE TABLE `dataset_jesus.ga_propensidad_compra` AS (
   -- Selecciona todas las columnas de la subconsulta.
   SELECT
     *
@@ -151,8 +151,8 @@ CREATE OR REPLACE TABLE `<dataset_jesus>.ga_propensidad_compra` AS (
 
 
 -- 5. (Requerido) Realiza un split de datos para entrenar y evaluar
--- Crea o reemplaza una tabla llamada `<dataset_jesus>.ga_propensidad_compra_ready_for_ml`
-CREATE OR REPLACE TABLE `<dataset_jesus>.ga_propensidad_compra_ready_for_ml` AS (
+-- Crea o reemplaza una tabla llamada `dataset_jesus.ga_propensidad_compra_ready_for_ml`
+CREATE OR REPLACE TABLE `dataset_jesus.ga_propensidad_compra_ready_for_ml` AS (
   -- Selecciona todas las columnas de la tabla original y añade una nueva columna llamada 'split_col'
   SELECT
     *,
@@ -175,7 +175,7 @@ CREATE OR REPLACE TABLE `<dataset_jesus>.ga_propensidad_compra_ready_for_ml` AS 
     END AS split_col
   -- Selecciona datos de la tabla original
   FROM
-    `<dataset_jesus>.ga_propensidad_compra` raw_features
+    `dataset_jesus.ga_propensidad_compra` raw_features
 );
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -216,7 +216,7 @@ ORDER BY
 LIMIT 10;
 
 -- Solución Ejercicio 3: Extraer características básicas de sesiones
-CREATE OR REPLACE TABLE `clean-silo-405314.<dataset_jesus>.basic_features` AS (
+CREATE OR REPLACE TABLE `clean-silo-405314.dataset_jesus.basic_features` AS (
   SELECT
     fullVisitorId,
     visitId,
@@ -233,7 +233,7 @@ CREATE OR REPLACE TABLE `clean-silo-405314.<dataset_jesus>.basic_features` AS (
 );
 
 -- Solución Ejercicio 4: Analizar comportamiento de compra
-CREATE OR REPLACE TABLE `clean-silo-405314.<dataset_jesus>.purchase_behavior` AS (
+CREATE OR REPLACE TABLE `clean-silo-405314.dataset_jesus.purchase_behavior` AS (
   SELECT
     fullVisitorId,
     COUNTIF(hits.eCommerceAction.action_type = '6') > 0 AS made_purchase,
@@ -248,7 +248,7 @@ CREATE OR REPLACE TABLE `clean-silo-405314.<dataset_jesus>.purchase_behavior` AS
 );
 
 -- Solución Ejercicio 5: Crear características para modelo de propensidad
-CREATE OR REPLACE TABLE `clean-silo-405314.<dataset_jesus>.propensity_model` AS (
+CREATE OR REPLACE TABLE `clean-silo-405314.dataset_jesus.propensity_model` AS (
   SELECT
     s.fullVisitorId,
     MAX(s.visitId) AS last_visit,
